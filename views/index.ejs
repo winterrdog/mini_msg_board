@@ -1,0 +1,13 @@
+<%- include('mainStart'); -%>
+
+    <h1>Mini-message Board</h1>
+    <% messages.forEach((msg) => { %>
+        <p>
+            <%= msg.user %>: <%= msg.text %>
+        </p>
+        <p>
+            Sent on: <%= msg.added %>
+        </p>
+    <% }) %>
+    
+<%- include('mainEnd'); -%>
