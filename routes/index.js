@@ -53,7 +53,7 @@ router
 router.use(async function (req, res, next) {
     res.writeHead(404);
     res.end("I am so sorry but that page has never existed, mn!");
-    await mongs.connection.close();
+    // await mongs.connection.close();
 });
 
 // error handler for route, /
