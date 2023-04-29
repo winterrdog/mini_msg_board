@@ -1,25 +1,37 @@
 const express = require("express");
 const router = express.Router();
 
-const msgs = [
-    {
-        text: "hi there!",
-        user: "Kxola",
-        added: new Date(),
-    },
-    {
-        text: "hello world!",
-        user: "Xila",
-        added: new Date(),
-    },
-];
+// database model
+const MessageModel = require("../models/message");
+
+// setting up database
+const mongs = require("mongoose");
+mongs.set("strictQuery", false);
+require("dotenv").config(); // load .env data
+const db_uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWD}@dbclst0.fadtg3n.mongodb.net/mini-msg-board?retryWrites=true&w=majority`;
+
+mongs
+    .connect(db_uri)
+    .then(() => console.log("connected to db"))
+    .catch((err) => console.error(err));
 
 /* GET home page. */
 router.get("/", function (req, res, next) {
-    res.render("index", {
-        title: "Mini-Messaging Board",
-        messages: msgs,
-    });
+    // query db for all messages
+    MessageModel.find({})
+        .exec()
+        .then((results) => {
+            res.render("index", {
+                title: "Mini-Messaging Board",
+                messages: results,
+            });
+        })
+        .catch((err) => {
+            console.error(`DB error: ${err}`);
+            res.writeHead(500);
+            res.end("code 500: server error!");
+            return;
+        });
 });
 
 /* GET & POST add new user */
@@ -32,15 +44,47 @@ router
         });
     })
     .post(function (req, res, next) {
-        // save message to an ephemeral db
-        msgs.push({
-            text: req.body.msgText,
-            user: req.body.author,
-            added: new Date(),
-        });
+        // save message to db
+        db_add_msg(
+            req.body.msgText,
+            req.body.author,
+            new Date()
+        ).catch((err) => console.error(err));
 
         // go back home
         res.redirect("/");
     });
+
+// 404
+router.use(async function (req, res, next) {
+    res.writeHead(500);
+    res.end("code 500: internal server error");
+    await mongs.connection.close();
+});
+
+// error handler for route
+router.use(async function (err, req, res, next) {
+    await mongs.connection.close();
+});
+
+async function db_add_msg(text, user, added) {
+    const msg = new MessageModel({
+        text_msg: text,
+        user_name: user,
+        added: added,
+    });
+
+    await msg
+        .save()
+        .then(function () {
+            console.log(
+                `-- added new message[ text: ${text}, username: ${user}, added: ${added} ]...`
+            );
+        })
+        .catch((err) => {
+            console.error(`DB error: ${err}`);
+            return;
+        });
+}
 
 module.exports = router;

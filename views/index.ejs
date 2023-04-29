@@ -19,7 +19,7 @@
     <h1>Mini-message Board</h1>
     <% messages.forEach((msg)=> { %>
         <p>
-            <%= msg.user %>: <%= msg.text %>
+            <%= msg.user_name %>: <%= msg.text_msg %>
         </p>
         <p id="time">
             Sent on: <%= msg.added %>
