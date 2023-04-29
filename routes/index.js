@@ -1,9 +1,6 @@
 const express = require("express");
 const router = express.Router();
 
-// database model
-const MessageModel = require("../models/message");
-
 // setting up database
 const mongs = require("mongoose");
 mongs.set("strictQuery", false);
@@ -12,8 +9,10 @@ const db_uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWD}@db
 
 mongs
     .connect(db_uri)
-    .then(() => console.log("connected to db"))
-    .catch((err) => console.error(err));
+    .then(() => console.log("-- connected to db"))
+    .catch((err) => console.error(err.message));
+
+const MessageModel = require("../models/message");
 
 /* GET home page. */
 router.get("/", function (req, res, next) {
@@ -26,12 +25,7 @@ router.get("/", function (req, res, next) {
                 messages: results,
             });
         })
-        .catch((err) => {
-            console.error(`DB error: ${err}`);
-            res.writeHead(500);
-            res.end("code 500: server error!");
-            return;
-        });
+        .catch((err) => handleServerError(err, res));
 });
 
 /* GET & POST add new user */
@@ -49,20 +43,20 @@ router
             req.body.msgText,
             req.body.author,
             new Date()
-        ).catch((err) => console.error(err));
+        ).catch((err) => handleServerError(err, res));
 
         // go back home
         res.redirect("/");
     });
 
-// 404
+// handle 404
 router.use(async function (req, res, next) {
-    res.writeHead(500);
-    res.end("code 500: internal server error");
+    res.writeHead(404);
+    res.end("I am so sorry but that page has never existed, mn!");
     await mongs.connection.close();
 });
 
-// error handler for route
+// error handler for route, /
 router.use(async function (err, req, res, next) {
     await mongs.connection.close();
 });
@@ -85,6 +79,14 @@ async function db_add_msg(text, user, added) {
             console.error(`DB error: ${err}`);
             return;
         });
+}
+
+function handleServerError(err, res) {
+    console.error(`DB error: ${err}`);
+
+    res.writeHead(500);
+    res.end("code 500: internal server error!");
+    return;
 }
 
 module.exports = router;
