@@ -68,17 +68,15 @@ async function db_add_msg(text, user, added) {
         added: added,
     });
 
-    await msg
-        .save()
-        .then(function () {
-            console.log(
-                `-- added new message[ text: ${text}, username: ${user}, added: ${added} ]...`
-            );
-        })
-        .catch((err) => {
-            console.error(`DB error: ${err}`);
-            return;
-        });
+    try {
+        await msg.save();
+        console.log(
+            `-- added new message[ text: ${text}, username: ${user}, added: ${added} ]...`
+        );
+    } catch (err) {
+        console.error(`DB error: ${err}`);
+        return;
+    }
 }
 
 function handleServerError(err, res) {
